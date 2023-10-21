@@ -1,6 +1,6 @@
 import { inflateSync } from 'zlib'
 
-import { arr2text } from 'uint8-util'
+import { arr2text, concat } from 'uint8-util'
 import { EbmlIteratorDecoder, EbmlTagId } from 'ebml-iterator'
 import 'fast-readable-async-iterator'
 
@@ -29,7 +29,6 @@ export default class Metadata extends Util {
   timecodeScale = 1
   currentClusterTimecode = null
 
-  stable = false
   destroyed = false
 
   /**
@@ -202,9 +201,10 @@ export default class Metadata extends Util {
     this.destroyed = true
   }
 
-  async * parseStream (stream) {
-    let stable = this.stable
-    this.stable = false
+  /**
+   * @param {AsyncIterable<Uint8Array>} stream
+   */
+  async * parseStream (stream, stable = false) {
     const decoder = new EbmlIteratorDecoder({
       bufferTagIds: [
         EbmlTagId.TimecodeScale,
@@ -228,6 +228,8 @@ export default class Metadata extends Util {
       [EbmlTagId.BlockGroup]: data => this.handleBlockGroup(data, timecodeScale, currentClusterTimecode)
     }
 
+    let buffer = new Uint8Array()
+
     for await (const chunk of stream) {
       if (!stable) {
         for (let i = 0; i < chunk.length - 12; i++) {
@@ -240,11 +242,16 @@ export default class Metadata extends Util {
             if (EbmlTagId[chunk[i + 4 + len]]) {
               // okay this is probably a cluster
               stable = true
+              buffer = null
               for (const tag of decoder.parseTags(chunk.slice(i))) {
                 tagMap[tag.id]?.(tag)
               }
+              break
             }
           }
+        }
+        if (!stable) {
+          buffer = concat([buffer, chunk])
         }
       } else {
         for (const tag of decoder.parseTags(chunk)) {
@@ -259,7 +266,7 @@ export default class Metadata extends Util {
   async parseFile () {
     this.stable = true
     // eslint-disable-next-line no-unused-vars
-    for await (const _ of this.parseStream(this.getFileStream())) {
+    for await (const _ of this.parseStream(this.getFileStream(), true)) {
       if (this.destroyed) return null
     }
   }

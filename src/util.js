@@ -36,7 +36,7 @@ export default class Util extends EventEmitter {
   }
 
   /**
-   * @param {AsyncIterable<any>} stream
+   * @param {AsyncIterable<Uint8Array>} stream
    * @param {number} tagId
    */
   async readUntilTag (stream, tagId, bufferTag = true) {
@@ -51,7 +51,7 @@ export default class Util extends EventEmitter {
   }
 
   /**
-   * @param {AsyncIterable<any>} seekHeadStream
+   * @param {AsyncIterable<Uint8Array>} seekHeadStream
    * @param {number} segmentStart
    */
   async readSeekHead (seekHeadStream, segmentStart) {
