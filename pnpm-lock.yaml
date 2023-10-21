@@ -1,0 +1,46 @@
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+dependencies:
+  ebml-iterator:
+    specifier: ^1.0.3
+    version: 1.0.3
+  fast-readable-async-iterator:
+    specifier: ^1.1.1
+    version: 1.1.1
+  pako:
+    specifier: ^2.1.0
+    version: 2.1.0
+  uint8-util:
+    specifier: ^2.2.4
+    version: 2.2.4
+
+packages:
+
+  /base64-arraybuffer@1.0.2:
+    resolution: {integrity: sha512-I3yl4r9QB5ZRY3XuJVEPfc2XhZO6YweFPI+UovAzn+8/hb3oJ6lnysaFcjVpkCPfVWFUDvoZ8kmVDP7WyRtYtQ==}
+    engines: {node: '>= 0.6.0'}
+    dev: false
+
+  /ebml-iterator@1.0.3:
+    resolution: {integrity: sha512-7fxmsa5U4kpMqR79CIDDPHSKsE4WCkRYLuOeMbnuO8VAdRQbPx36vDEUkuKXSwRuU//YoxPzW6NkG1aMbC7GMw==}
+    dependencies:
+      uint8-util: 2.2.4
+    dev: false
+
+  /fast-readable-async-iterator@1.1.1:
+    resolution: {integrity: sha512-xEHkLUEmStETI+15zhglJLO9TjXxNkkp2ldEfYVZdcqxFhM172EfGl1irI6mVlTxXspYKH1/kjevnt/XSsPeFA==}
+    dev: false
+
+  /pako@2.1.0:
+    resolution: {integrity: sha512-w+eufiZ1WuJYgPXbV/PO3NCMEc3xqylkKHzp8bxp1uW4qaSNQUkwmLLEc3kKsfz8lpV1F8Ht3U1Cm+9Srog2ug==}
+    dev: false
+
+  /uint8-util@2.2.4:
+    resolution: {integrity: sha512-uEI5lLozmKQPYEevfEhP9LY3Je5ZmrQhaWXrzTVqrLNQl36xsRh8NiAxYwB9J+2BAt99TRbmCkROQB2ZKhx4UA==}
+    dependencies:
+      base64-arraybuffer: 1.0.2
+    dev: false

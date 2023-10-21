@@ -1,0 +1,19 @@
+{
+  "name": "matroska-metadata",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "main": "index.js",
+  "browser": {
+    "zlib": "./scr/inflateWeb.js"
+  },
+  "keywords": [],
+  "author": "ThaUnknown",
+  "license": "MIT",
+  "dependencies": {
+    "ebml-iterator": "^1.0.3",
+    "fast-readable-async-iterator": "^1.1.1",
+    "pako": "^2.1.0",
+    "uint8-util": "^2.2.4"
+  }
+}
