@@ -24,25 +24,13 @@ function getData (chunk, tag) {
   return getChild(chunk, tag)?.data
 }
 
-export default class extends Util {
+export default class Metadata extends Util {
   implementsSlice = false
   timecodeScale = 1
-  _currentClusterTimecode = null
+  currentClusterTimecode = null
 
   stable = false
   destroyed = false
-
-  tagMap = {
-    // Segment Information
-    [EbmlTagId.TimecodeScale]: tag => {
-      this.timecodeScale = tag.data / 1000000
-    },
-    // Assumption: This is a Cluster `Timecode`
-    [EbmlTagId.Timecode]: tag => {
-      this._currentClusterTimecode = tag.data
-    },
-    [EbmlTagId.BlockGroup]: data => this.handleBlockGroup(data)
-  }
 
   /**
    * @type {Map<any, {number: string, language: string, type: string, _compressed?: boolean}>}
@@ -67,11 +55,11 @@ export default class extends Util {
    * @returns {Promise<{filename: string, mimetype: string, data: Uint8Array}[]>}
    */
   async getAttachments () {
-    return (await this.readSeekedTag('Attachments')).Children.map((/** @type {import("ebml-iterator").EbmlMasterTag} */ chunk) => ({
+    return (await this.readSeekHeadTag('Attachments'))?.Children?.map((/** @type {import("ebml-iterator").EbmlMasterTag} */ chunk) => ({
       filename: getData(chunk, EbmlTagId.FileName),
       mimetype: getData(chunk, EbmlTagId.FileMimeType),
       data: getData(chunk, EbmlTagId.FileData)
-    }))
+    })) || []
   }
 
   /**
@@ -79,7 +67,9 @@ export default class extends Util {
    */
   async getTracks () {
     if (this.tracks) return await this.tracks
-    const Tracks = await this.readSeekedTag('Tracks')
+    const Tracks = await this.readSeekHeadTag('Tracks')
+
+    if (!Tracks?.Children?.length) return []
 
     for (const entry of Tracks.Children.filter(c => c.id === EbmlTagId.TrackEntry)) {
       // Skip non subtitle tracks
@@ -120,7 +110,11 @@ export default class extends Util {
   }
 
   async getChapters () {
-    const Chapters = await this.readSeekedTag('Chapters')
+    const Chapters = await this.readSeekHeadTag('Chapters')
+
+    const timecodeScale = this.timecodeScale || ((await this.readUntilTag(this.getFileStream(), EbmlTagId.TimecodeScale))?.data / 1000000)
+
+    if (!Chapters?.Children?.length) return []
 
     const editions = Chapters.Children.filter(c => c.id === EbmlTagId.EditionEntry)
 
@@ -137,8 +131,8 @@ export default class extends Util {
 
     const chapters = []
     for (let i = atoms.length - 1; i >= 0; --i) {
-      const start = getData(atoms[i], EbmlTagId.ChapterTimeStart) / this.timecodeScale / 1000000
-      const end = (getData(atoms[i], EbmlTagId.ChapterTimeEnd) / this.timecodeScale / 1000000) || chapters[i + 1]?.start || await this.duration
+      const start = getData(atoms[i], EbmlTagId.ChapterTimeStart) / timecodeScale / 1000000
+      const end = (getData(atoms[i], EbmlTagId.ChapterTimeEnd) / timecodeScale / 1000000) || chapters[i + 1]?.start || await this.duration || 0
       const disp = getChild(atoms[i], EbmlTagId.ChapterDisplay)
 
       chapters[i] = {
@@ -153,17 +147,21 @@ export default class extends Util {
   }
 
   /**
-   * @returns {Promise<number>}
+   * @returns {Promise<number | undefined>}
    */
   async getDuration () {
     if (this.duration) return this.duration
-    return (await this.readSeekedTag('Duration')).data
+    const Info = await this.readSeekHeadTag('Info')
+
+    if (!Info?.Children?.length) return undefined
+    const Duration = getChild(Info, EbmlTagId.Duration)
+    return Duration?.data
   }
 
   /**
    * @param {import("ebml-iterator").EbmlMasterTag} chunk
    */
-  async handleBlockGroup (chunk) {
+  async handleBlockGroup (chunk, timecodeScale, currentClusterTimecode) {
     await this.tracks
 
     const block = getChild(chunk, EbmlTagId.Block)
@@ -180,8 +178,8 @@ export default class extends Util {
 
       const subtitle = {
         text: arr2text(payload),
-        time: (block.value + this._currentClusterTimecode) * this.timecodeScale,
-        duration: blockDuration * this.timecodeScale
+        time: (block.value + currentClusterTimecode) * timecodeScale,
+        duration: blockDuration * timecodeScale
       }
 
       if (SSA_TYPES.has(track.type)) {
@@ -211,9 +209,24 @@ export default class extends Util {
       bufferTagIds: [
         EbmlTagId.TimecodeScale,
         EbmlTagId.BlockGroup,
-        EbmlTagId.Duration
+        EbmlTagId.Timecode
       ]
     })
+
+    let timecodeScale = this.timecodeScale
+    let currentClusterTimecode = this.currentClusterTimecode
+
+    const tagMap = {
+      // Segment Information
+      [EbmlTagId.TimecodeScale]: tag => {
+        this.timecodeScale = timecodeScale = tag.data / 1000000
+      },
+      // Assumption: This is a Cluster `Timecode`
+      [EbmlTagId.Timecode]: tag => {
+        this.currentClusterTimecode = currentClusterTimecode = tag.data
+      },
+      [EbmlTagId.BlockGroup]: data => this.handleBlockGroup(data, timecodeScale, currentClusterTimecode)
+    }
 
     for await (const chunk of stream) {
       if (!stable) {
@@ -228,14 +241,14 @@ export default class extends Util {
               // okay this is probably a cluster
               stable = true
               for (const tag of decoder.parseTags(chunk.slice(i))) {
-                this.tagMap[tag.id]?.(tag)
+                tagMap[tag.id]?.(tag)
               }
             }
           }
         }
       } else {
         for (const tag of decoder.parseTags(chunk)) {
-          this.tagMap[tag.id]?.(tag)
+          tagMap[tag.id]?.(tag)
         }
       }
       yield chunk

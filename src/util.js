@@ -6,7 +6,7 @@ function getChild (chunk, tag) {
   return chunk?._children.find(({ id }) => id === tag)
 }
 
-export default class extends EventEmitter {
+export default class Util extends EventEmitter {
   /** @type {Blob} */
   file
 
@@ -16,21 +16,12 @@ export default class extends EventEmitter {
   seekHead
   /** @type {Promise<import('ebml-iterator').EbmlMasterTag | undefined>} */
   segment
-  /** @type {Promise<number>} */
+  /** @type {Promise<number | undefined>} */
   duration
   /** @type {Promise<{ number: string; language: string; type: string; _compressed?: boolean | undefined; }[]>} */
   tracks
   segmentStart = 0
-  tagCache = {
-    segment: null,
-    info: null,
-    tracks: [],
-    chapters: [],
-    cluster: [],
-    cues: [],
-    attachments: [],
-    tags: []
-  }
+  tagCache = {}
 
   processTags (tag) {
     if (tag.data && (tag.type === EbmlElementType.String || tag.type === EbmlElementType.UTF8 || tag.type == null)) {
@@ -124,14 +115,13 @@ export default class extends EventEmitter {
 
   /**
    * @param {string} tag
+   * @returns {Promise<null|import('ebml-iterator').EbmlMasterTag>}
    */
-  async readSeekedTag (tag) {
+  async readSeekHeadTag (tag) {
     const seekHead = await this.seekHead
 
     const storedTag = tag.toLowerCase()
-    if (!this.tagCache[storedTag] || this.tagCache[storedTag]?.length === 0) {
-      if (this.tagCache[storedTag]?.length !== 0 && seekHead[tag]) return {}
-
+    if (!this.tagCache[storedTag] && seekHead[tag]) {
       const stream = this.getFileStream()
       const child = await this.readUntilTag(stream, EbmlTagId[tag])
       if (!child) return null
