@@ -54,7 +54,7 @@ export default class Util extends EventEmitter {
    * @param {AsyncIterable<Uint8Array>} seekHeadStream
    * @param {number} segmentStart
    */
-  async readSeekHead (seekHeadStream, segmentStart) {
+  async readSeekHead (seekHeadStream, segmentStart, recurse = true) {
     const seekHead = await this.readUntilTag(seekHeadStream, EbmlTagId.SeekHead)
     if (this.destroyed) return null
     if (!seekHead) throw new Error('Couldn\'t find seek head')
@@ -70,9 +70,9 @@ export default class Util extends EventEmitter {
     // Determines if there is a second SeekHead referenced by the first SeekHead.
     // See: https://www.matroska.org/technical/ordering.html#seekhead
     // Note: If true, the first *must* contain a reference to the second, but other tags can be in the first.
-    if (transformedHead.SeekHead) {
+    if (transformedHead.SeekHead && recurse) {
       const seekHeadStream = this.getFileStream(transformedHead.SeekHead + segmentStart)
-      const secondSeekHead = await this.readSeekHead(seekHeadStream, segmentStart)
+      const secondSeekHead = await this.readSeekHead(seekHeadStream, segmentStart, false)
       return { ...secondSeekHead, ...transformedHead }
     } else {
       return transformedHead
