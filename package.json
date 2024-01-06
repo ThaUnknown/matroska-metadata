@@ -1,11 +1,11 @@
 {
   "name": "matroska-metadata",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "",
   "type": "module",
   "main": "src/index.js",
   "browser": {
-    "zlib": "./scr/inflateWeb.js"
+    "zlib": "./src/inflateWeb.js"
   },
   "keywords": [],
   "author": "ThaUnknown",
