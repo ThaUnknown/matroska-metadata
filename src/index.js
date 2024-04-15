@@ -14,7 +14,7 @@ const SSA_KEYS = ['readOrder', 'layer', 'style', 'name', 'marginL', 'marginR', '
  * @param {number} tag
  */
 function getChild (chunk, tag) {
-  return chunk?.Children.find(({ id }) => id === tag)
+  return chunk?.Children?.find(({ id }) => id === tag)
 }
 /**
  * @param {import('ebml-iterator').EbmlMasterTag} chunk

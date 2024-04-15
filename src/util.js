@@ -3,7 +3,7 @@ import EventEmitter from 'events'
 import { EbmlIteratorDecoder, Tools, EbmlTagId, EbmlElementType } from 'ebml-iterator'
 
 function getChild (chunk, tag) {
-  return chunk?._children.find(({ id }) => id === tag)
+  return chunk?._children?.find(({ id }) => id === tag)
 }
 
 export default class Util extends EventEmitter {
