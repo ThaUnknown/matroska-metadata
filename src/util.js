@@ -71,7 +71,7 @@ export default class Util extends EventEmitter {
     // See: https://www.matroska.org/technical/ordering.html#seekhead
     // Note: If true, the first *must* contain a reference to the second, but other tags can be in the first.
     if (transformedHead.SeekHead && recurse) {
-      const seekHeadStream = this.getFileStream(transformedHead.SeekHead + segmentStart)
+      const seekHeadStream = this.getFileStream(transformedHead.SeekHead.data + seekHead.absoluteStart)
       const secondSeekHead = await this.readSeekHead(seekHeadStream, segmentStart, false)
       return { ...secondSeekHead, ...transformedHead }
     } else {
