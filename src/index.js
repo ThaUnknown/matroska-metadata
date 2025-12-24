@@ -185,8 +185,7 @@ export default class Metadata extends Util {
         // extract SSA/ASS keys
         const values = subtitle.text.split(',')
 
-        // ignore read-order, and skip layer if ssa
-        for (let i = track.type === 'ssa' ? 2 : 1; i < 8; i++) {
+        for (let i = 0; i < 8; i++) {
           subtitle[SSA_KEYS[i]] = values[i]
         }
 
