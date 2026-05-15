@@ -18,7 +18,7 @@ export default class Util extends EventEmitter {
   segment
   /** @type {Promise<number | undefined>} */
   duration
-  /** @type {Promise<{ number: string; language: string; type: string; _compressed?: boolean | undefined; }[]>} */
+  /** @type {Promise<{ number: string, language: string, type: string, _compressed: boolean, default: boolean, forced: boolean, name?: string, header?: string }[]>} */
   tracks
   segmentStart = 0
   tagCache = {}

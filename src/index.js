@@ -32,7 +32,7 @@ export default class Metadata extends Util {
   destroyed = false
 
   /**
-   * @type {Map<any, {number: string, language: string, type: string, _compressed?: boolean, default: boolean, forced: boolean, name?: string, header?: string}>}
+   * @type {Map<any, {number: string, language: string, type: string, _compressed: boolean, default: boolean, forced: boolean, name?: string, header?: string}>}
    */
   subtitleTracks = new Map()
 
@@ -62,7 +62,7 @@ export default class Metadata extends Util {
   }
 
   /**
-   * @returns {Promise<{number: string, language: string, type: string, _compressed?: boolean, default: boolean, forced: boolean, name?: string, header?: string}[]>}
+   * @returns {Promise<{number: string, language: string, type: string, _compressed: boolean, default: boolean, forced: boolean, name?: string, header?: string}[]>}
    */
   async getTracks () {
     if (this.tracks) return await this.tracks
@@ -78,36 +78,29 @@ export default class Metadata extends Util {
       if (codecID.startsWith('S_TEXT')) {
         const track = {
           number: getData(entry, EbmlTagId.TrackNumber),
-          language: getData(entry, EbmlTagId.Language),
+          language: getData(entry, EbmlTagId.Language) ?? 'eng',
           type: codecID.substring(7).toLowerCase(),
-          default: Boolean(getData(entry, EbmlTagId.FlagDefault)),
-          forced: Boolean(getData(entry, EbmlTagId.FlagForced))
+          default: Boolean(getData(entry, EbmlTagId.FlagDefault) ?? 1),
+          forced: Boolean(getData(entry, EbmlTagId.FlagForced) ?? 0),
+          name: getData(entry, EbmlTagId.Name),
+          // TODO: Assume zlib deflate compression
+          _compressed: !!entry.Children.find(c =>
+            c.id === EbmlTagId.ContentEncodings &&
+            c.Children.find(cc =>
+              cc.id === EbmlTagId.ContentEncoding &&
+              getChild(cc, EbmlTagId.ContentCompression)
+            )
+          )
         }
-
-        const name = getData(entry, EbmlTagId.Name)
-        if (name) track.name = name
 
         const header = getData(entry, EbmlTagId.CodecPrivate)
         if (header) track.header = arr2text(header)
-
-        // TODO: Assume zlib deflate compression
-        const compressed = entry.Children.find(c =>
-          c.id === EbmlTagId.ContentEncodings &&
-          c.Children.find(cc =>
-            cc.id === EbmlTagId.ContentEncoding &&
-            getChild(cc, EbmlTagId.ContentCompression)
-          )
-        )
-
-        if (compressed) track._compressed = true
 
         this.subtitleTracks.set(track.number, track)
       }
     }
 
-    const tracks = [...this.subtitleTracks.values()]
-
-    return tracks
+    return [...this.subtitleTracks.values()]
   }
 
   async getChapters () {
