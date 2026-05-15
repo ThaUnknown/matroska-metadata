@@ -32,7 +32,7 @@ export default class Metadata extends Util {
   destroyed = false
 
   /**
-   * @type {Map<any, {number: string, language: string, type: string, _compressed?: boolean}>}
+   * @type {Map<any, {number: string, language: string, type: string, _compressed?: boolean, default: boolean, forced: boolean}>}
    */
   subtitleTracks = new Map()
 
@@ -79,7 +79,9 @@ export default class Metadata extends Util {
         const track = {
           number: getData(entry, EbmlTagId.TrackNumber),
           language: getData(entry, EbmlTagId.Language),
-          type: codecID.substring(7).toLowerCase()
+          type: codecID.substring(7).toLowerCase(),
+          default: Boolean(getData(entry, EbmlTagId.FlagDefault)),
+          forced: Boolean(getData(entry, EbmlTagId.FlagForced))
         }
 
         const name = getData(entry, EbmlTagId.Name)
