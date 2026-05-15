@@ -62,7 +62,7 @@ export default class Metadata extends Util {
   }
 
   /**
-   * @returns {Promise<{number: string, language: string, type: string, _compressed?: boolean}[]>}
+   * @returns {Promise<{number: string, language: string, type: string, _compressed?: boolean, default: boolean, forced: boolean}[]>}
    */
   async getTracks () {
     if (this.tracks) return await this.tracks
