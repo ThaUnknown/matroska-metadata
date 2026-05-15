@@ -32,7 +32,7 @@ export default class Metadata extends Util {
   destroyed = false
 
   /**
-   * @type {Map<any, {number: string, language: string, type: string, _compressed?: boolean, default: boolean, forced: boolean}>}
+   * @type {Map<any, {number: string, language: string, type: string, _compressed?: boolean, default: boolean, forced: boolean, name?: string, header?: string}>}
    */
   subtitleTracks = new Map()
 
@@ -62,7 +62,7 @@ export default class Metadata extends Util {
   }
 
   /**
-   * @returns {Promise<{number: string, language: string, type: string, _compressed?: boolean, default: boolean, forced: boolean}[]>}
+   * @returns {Promise<{number: string, language: string, type: string, _compressed?: boolean, default: boolean, forced: boolean, name?: string, header?: string}[]>}
    */
   async getTracks () {
     if (this.tracks) return await this.tracks
